@@ -5,6 +5,9 @@ from PIL import Image
 from PIL import ImageTk
 import tkinter.filedialog
 import cv2
+import filtersGUI
+import filters
+import numpy as np
 
 def save_images():
     img = ImageTk.getimage(panelA.image).convert('RGB')
@@ -55,6 +58,36 @@ def select_image():
             panelA.image = image
             panelB.image = edged
 
+def getImage(panel):
+    img = ImageTk.getimage(panel.image).convert('RGB')
+    img =  np.asarray(img)
+    return cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+    
+
+def sendImageToLabel(frame):
+    if len(frame.shape) == 3:
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    elif len(frame.shape) == 2:
+        img = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+    img = Image.fromarray(img)
+    img = ImageTk.PhotoImage(img)
+    panelB.configure(image = img)
+    panelB.image = img
+
+
+
+def update(panel,filtersGui):
+    if not filtersGui.filterType == 'Normal':
+        frame = filters.ApplyFilter(filtersGui.filterType,frame = getImage(panel),ksize=(int(filtersGui.filterValue.get()),int(filtersGui.filterValue.get())))
+        sendImageToLabel(frame)
+    else:
+        pass
+
+def looping(root):
+    # sth
+    update(panelA,filtersGUI)
+    root.update()   
+
 #inicialize the window toolkit
 
 root = Tk()
@@ -74,6 +107,9 @@ root.config(menu = menu, width=50,height=30)
 btn = Button(root, text = "Select an image", command = select_image)
 btn.pack(side = "bottom", fill = "both", expand = "Yes", padx = "10", pady = "10")
 
-#kick off the gui
+filtersGUI = filtersGUI.filtersGUI(root)
+filtersGUI.pack(side="left")
 
-root.mainloop()
+#kick off the gui
+while 1:
+    looping(root)
